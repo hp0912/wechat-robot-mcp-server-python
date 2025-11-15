@@ -46,7 +46,7 @@ class Contact(Base):
     
     def is_chat_room(self) -> bool:
         """判断联系人是否为群组"""
-        return self.type == ContactType.CHAT_ROOM.value # type: ignore
+        return str(self.type) == ContactType.CHAT_ROOM.value
 
 
 class ContactSchema(BaseModel):

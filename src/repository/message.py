@@ -2,7 +2,7 @@
 Message repository for database operations
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, cast
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func
 
@@ -91,7 +91,7 @@ class MessageRepository:
             # 获取发送者昵称（需要联表查询 chat_room_members）
             # 这里简化处理，直接使用 sender_wxid
             # 实际应该联表查询 chat_room_members 获取 remark 或 nickname
-            nickname = str(msg.sender_wxid) if msg.sender_wxid else ""  # type: ignore
+            nickname = str(msg.sender_wxid or "")
             
             # 处理消息内容
             message_content = self._extract_message_content(msg, app_msg_list)
@@ -100,7 +100,7 @@ class MessageRepository:
                 result.append(TextMessageItem(
                     nickname=nickname,
                     message=message_content,
-                    created_at=int(msg.created_at) if msg.created_at else 0  # type: ignore
+                    created_at=cast(int, msg.created_at) if msg.created_at is not None else 0
                 ))
         
         return result
@@ -116,16 +116,16 @@ class MessageRepository:
         Returns:
             消息内容，如果不符合条件返回 None
         """
-        msg_type = int(msg.type) if msg.type else 0  # type: ignore
+        msg_type = cast(int, msg.type) if msg.type is not None else 0
         
         # 文本消息
         if msg_type == 1:
-            return str(msg.content) if msg.content else ""  # type: ignore
+            return str(msg.content or "")
         
         # APP消息
         if msg_type == 49:
             try:
-                content = str(msg.content) if msg.content else ""  # type: ignore
+                content = str(msg.content or "")
                 if not content:
                     return None
                     
@@ -164,8 +164,8 @@ class MessageRepository:
                     des_elem = root.find('.//appmsg/des')
                     return des_elem.text if des_elem is not None else ""
                     
-            except Exception as e:
+            except Exception:
                 # XML 解析失败，返回原始内容
-                return str(msg.content) if msg.content else ""  # type: ignore
+                return str(msg.content or "")
         
         return None

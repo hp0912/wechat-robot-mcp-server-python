@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional, List, Any
+from typing import Optional, List
 
 
 @dataclass
@@ -191,7 +191,7 @@ class Contact:
     DeleteFlag: int = 0
     DeleteContactScene: int = 0
     Description: str = ""
-    DomainList: Any = None
+    DomainList: object = None  # any type in Golang
     EncryptUserName: str = ""
     ExtInfo: str = ""
     ExtFlag: int = 0
@@ -243,7 +243,7 @@ class DelContact:
 @dataclass
 class UserImg:
     BigHeadImgUrl: str = ""
-    ImgBuf: Any = None
+    ImgBuf: object = None  # any type in Golang
     ImgLen: int = 0
     ImgMd5: str = ""
     ImgType: int = 0

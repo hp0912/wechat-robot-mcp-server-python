@@ -4,8 +4,7 @@ Tenant Middleware - 租户中间件
 用于从请求中解析机器人上下文并设置数据库连接
 """
 import logging
-from typing import Any, Callable, Awaitable, Dict
-from mcp.types import CallToolRequest
+from typing import Any, Dict
 
 from ..config import config
 from ..robot_context import RobotContext, set_robot_context, set_db
@@ -40,64 +39,21 @@ def parse_robot_context(meta: Dict[str, Any]) -> RobotContext:
         logger.error(f"解析 RobotContext 失败: {e}")
         return RobotContext()
 
+def apply_tenant_from_meta(meta: Dict[str, Any]) -> None:
+    """根据 MCP 请求中的 meta 设置机器人上下文和数据库连接"""
+    if not meta:
+        return
 
-class TenantMiddleware:
-    """租户中间件 - 处理机器人上下文和数据库连接"""
-    
-    def __init__(self, handler: Callable):
-        self.handler = handler
-    
-    async def __call__(self, request: Any) -> Any:
-        """中间件处理函数"""
-        # 检查是否是 CallToolRequest
-        if isinstance(request, CallToolRequest):
-            if hasattr(request, 'params') and hasattr(request.params, 'meta'):
-                meta = getattr(request.params, 'meta', None)
-                if meta:
-                    # 解析机器人上下文
-                    rc = parse_robot_context(meta)
-                    set_robot_context(rc)
-                    
-                    # 如果有 RobotCode，设置数据库连接
-                    if rc.robot_code:
-                        try:
-                            db = config.get_db_by_robot_code(rc.robot_code)
-                            set_db(db)
-                        except Exception as e:
-                            logger.error(
-                                f"获取数据库连接失败(RobotCode:{rc.robot_code}): {e}"
-                            )
-        
-        # 调用下一个处理器
-        return await self.handler(request)
+    # 解析机器人上下文
+    rc = parse_robot_context(meta)
+    set_robot_context(rc)
 
-
-def create_tenant_middleware(
-    next_handler: Callable[[Any], Awaitable[Any]]
-) -> Callable[[Any], Awaitable[Any]]:
-    """创建租户中间件（函数式风格）"""
-    
-    async def middleware(request: Any) -> Any:
-        # 检查是否是 CallToolRequest
-        if isinstance(request, CallToolRequest):
-            if hasattr(request, 'params') and hasattr(request.params, 'meta'):
-                meta = getattr(request.params, 'meta', None)
-                if meta:
-                    # 解析机器人上下文
-                    rc = parse_robot_context(meta)
-                    set_robot_context(rc)
-                    
-                    # 如果有 RobotCode，设置数据库连接
-                    if rc.robot_code:
-                        try:
-                            db = config.get_db_by_robot_code(rc.robot_code)
-                            set_db(db)
-                        except Exception as e:
-                            logger.error(
-                                f"获取数据库连接失败(RobotCode:{rc.robot_code}): {e}"
-                            )
-        
-        # 调用下一个处理器
-        return await next_handler(request)
-    
-    return middleware
+    # 如果有 RobotCode，设置数据库连接
+    if rc.robot_code:
+        try:
+            db = config.get_db_by_robot_code(rc.robot_code)
+            set_db(db)
+        except Exception as e:
+            logger.error(
+                f"获取数据库连接失败(RobotCode:{rc.robot_code}): {e}"
+            )

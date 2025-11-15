@@ -1,6 +1,6 @@
 import re
 import logging
-from typing import Tuple, Any, Optional
+from typing import Tuple, Dict, Any, Optional
 
 
 def normalize_ai_base_url(base_url: str) -> str:
@@ -20,7 +20,7 @@ def normalize_ai_base_url(base_url: str) -> str:
     return base_url
 
 
-def call_tool_result_error(errmsg: str) -> Tuple[dict, Any, None]:
+def call_tool_result_error(errmsg: str) -> Tuple[Dict[str, Any], None, None]:
     """
     创建工具调用错误结果
     
@@ -32,7 +32,7 @@ def call_tool_result_error(errmsg: str) -> Tuple[dict, Any, None]:
     """
     logging.error(errmsg)
     
-    result = {
+    result: Dict[str, Any] = {
         "isError": True,
         "content": [
             {
